@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pretium Intelligence Desk</title>
+<style>
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#0d1233;
+         font-family:'Segoe UI',-apple-system,sans-serif; color:#fff; }
+  .box { text-align:center; padding:40px; max-width:440px; }
+  h1 { font-weight:500; font-size:22px; margin:0 0 8px; }
+  h1 span { color:#8aa4f5; }
+  p { color:#b8bfdd; font-size:14px; line-height:1.6; margin:6px 0; }
+  .spin { width:34px; height:34px; border:3px solid rgba(138,164,245,.25); border-top-color:#8aa4f5; border-radius:50%;
+          margin:0 auto 22px; animation:s 0.9s linear infinite; }
+  @keyframes s { to { transform:rotate(360deg); } }
+  a { color:#8aa4f5; }
+  .err { display:none; } .failed .err { display:block; } .failed .spin, .failed .wait { display:none; }
+</style>
+</head>
+<body>
+<div class="box" id="box">
+  <div class="spin"></div>
+  <h1>Pretium <span>Intelligence Desk</span></h1>
+  <p class="wait">Opening the site…</p>
+  <div class="err">
+    <p>The site could not be reached right now. The host PC may be switched off or restarting.</p>
+    <p>Please try again in a few minutes. <a href="" onclick="location.reload();return false">Retry</a></p>
+  </div>
+</div>
+<script>
+// Forwards to the site's current address, published in url.json next to this page.
+// Deep links keep their path, e.g. .../pretiumdesk/news → <site>/settings.
+const ROOT = '/pretiumdesk/';   // filled in by github_link.py: "/" or "/<repo>/"
+(async () => {
+  const root = ROOT.startsWith('/') ? ROOT : '/';
+  const rest = location.pathname.startsWith(root) ? location.pathname.slice(root.length).replace(/^(index|404)\.html$/, '') : '';
+  try {
+    const r = await fetch(root + 'url.json?t=' + Date.now(), {cache:'no-store'});
+    const {url} = await r.json();
+    if (!/^https:\/\/[a-z0-9.-]+$/i.test(url)) throw new Error('bad url');
+    // Only forward when the site answers; otherwise show the "offline" message.
+    await Promise.race([fetch(url + '/login', {mode:'no-cors', cache:'no-store'}),
+                        new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 15000))]);
+    location.replace(url + '/' + rest.replace(/^\/+/, '') + location.search + location.hash);
+  } catch (e) {
+    document.getElementById('box').classList.add('failed');
+  }
+})();
+</script>
+</body>
+</html>
