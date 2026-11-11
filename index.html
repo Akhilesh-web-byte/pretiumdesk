@@ -38,7 +38,9 @@ const ROOT = '/pretiumdesk/';   // filled in by github_link.py: "/" or "/<repo>/
   const rest = location.pathname.startsWith(root) ? location.pathname.slice(root.length).replace(/^(index|404)\.html$/, '') : '';
   try {
     const r = await fetch(root + 'url.json?t=' + Date.now(), {cache:'no-store'});
-    const {url} = await r.json();
+    const j = await r.json();
+    // "home" = the Desk's branded address (pages.dev forwarder); "url" = the tunnel behind it.
+    const url = /^https:\/\/[a-z0-9.-]+$/i.test(j.home || '') ? j.home : j.url;
     if (!/^https:\/\/[a-z0-9.-]+$/i.test(url)) throw new Error('bad url');
     // Only forward when the site answers; otherwise show the "offline" message.
     await Promise.race([fetch(url + '/login', {mode:'no-cors', cache:'no-store'}),
